@@ -1,0 +1,93 @@
+{  
+   "StartAt":"ValidateState",
+   "States":{  
+      "ValidateState":{  
+         "Type":"Task",
+         "Resource":"arn:aws:states:::lambda:invoke",
+         "Parameters":{  
+            "FunctionName":"ValidationHandler",
+            "Payload":{
+           "Input.$":"$"
+         }
+         }, 
+         "InputPath": "$",
+        "ResultPath":"$.Result",
+        "OutputPath":"$",
+         "Next": "ValidateChoice"
+      },
+      "ValidateChoice":{  
+         "Type": "Choice",
+        
+         "Choices": [
+          {
+               "Variable": "$.Result.Payload",
+               "StringEquals": "Approval Flow",
+               "Next": "ApprovalState"
+          },
+          {
+                "Variable": "$.Result.Payload",
+                 "StringEquals": "Merge Flow",
+                 "Next": "MergeState"
+           },
+            {
+                "Variable": "$.Result.Payload",
+                 "StringEquals": "Terminate Flow",
+                 "Next": "TerminateState"
+           }
+           ],
+        "OutputPath":"$"
+      },
+     "ApprovalState":
+     {
+        "Type":"Task",
+         "Resource":"arn:aws:states:::lambda:invoke",
+         "Parameters":{  
+            "FunctionName":"ApprovalHandler",
+            "Payload":{
+           "Input.$":"$"
+         }
+         },
+       "InputPath": "$",
+        "ResultPath":"$.Result",
+        "OutputPath":"$",
+         "Next": "ApprovalChoice"
+     },
+     "ApprovalChoice":{  
+         "Type": "Choice",
+         "Choices": [
+          {
+               "Variable": "$.Result.Payload",
+               "StringEquals": "Accept",
+               "Next": "MergeState"
+          },
+          {
+                "Variable": "$.Result.Payload",
+                 "StringEquals": "Reject",
+                 "Next": "TerminateState"
+           }
+           ],
+        "OutputPath":"$"
+      },
+     "MergeState":
+     {
+        "Type":"Task",
+         "Resource":"arn:aws:states:::lambda:invoke",
+         "Parameters":{  
+            "FunctionName":"MergingHandler",
+            "Payload":{
+           "Input.$":"$"
+         }
+         },
+       "InputPath": "$",
+         "End":true
+     },
+     "TerminateState":
+     {
+        "Type":"Pass",
+         "Comment":"Upload New file",
+       "End":true
+     }
+
+   }   
+    
+}
